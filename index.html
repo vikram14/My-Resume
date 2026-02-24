@@ -33,11 +33,31 @@
       margin-top: 40px;
       display: none;
     }
+    #download-btn {
+      display: none;
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      padding: 10px 24px;
+      background: #fff;
+      color: #333;
+      font-family: sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+    #download-btn:hover { background: #e8e8e8; }
   </style>
 </head>
 <body>
   <div id="loading">Loading resume...</div>
   <div id="error">Failed to load resume PDF.</div>
+  <a id="download-btn" href="%20My%20Resume.pdf" download="Vikram_Resume.pdf">Download PDF</a>
   <div id="pdf-container"></div>
 
   <script type="module">
@@ -56,15 +76,20 @@
       try {
         const pdf = await pdfjsLib.getDocument(PDF_URL).promise;
         loading.style.display = 'none';
+        document.getElementById('download-btn').style.display = 'block';
 
+        const dpr = window.devicePixelRatio || 1;
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           const page = await pdf.getPage(pageNum);
-          const scale = Math.min(window.innerWidth - 40, 900) / page.getViewport({ scale: 1 }).width;
+          const cssWidth = Math.min(window.innerWidth - 40, 900);
+          const scale = (cssWidth / page.getViewport({ scale: 1 }).width) * dpr;
           const viewport = page.getViewport({ scale });
 
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
+          canvas.style.width = (viewport.width / dpr) + 'px';
+          canvas.style.height = (viewport.height / dpr) + 'px';
 
           const ctx = canvas.getContext('2d');
           await page.render({ canvasContext: ctx, viewport }).promise;
