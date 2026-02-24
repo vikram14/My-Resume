@@ -15,10 +15,16 @@
       padding: 20px 0;
       min-height: 100vh;
     }
-    #pdf-container canvas {
+    .pdf-page {
+      position: relative;
       display: block;
       margin: 10px auto;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .pdf-page canvas { display: block; }
+    .pdf-page a {
+      position: absolute;
+      cursor: pointer;
     }
     #loading {
       color: #ccc;
@@ -98,6 +104,11 @@
           const scale = (cssWidth / page.getViewport({ scale: 1 }).width) * dpr;
           const viewport = page.getViewport({ scale });
 
+          const pageDiv = document.createElement('div');
+          pageDiv.className = 'pdf-page';
+          pageDiv.style.width = (viewport.width / dpr) + 'px';
+          pageDiv.style.height = (viewport.height / dpr) + 'px';
+
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
@@ -106,7 +117,24 @@
 
           const ctx = canvas.getContext('2d');
           await page.render({ canvasContext: ctx, viewport }).promise;
-          container.appendChild(canvas);
+          pageDiv.appendChild(canvas);
+
+          const annotations = await page.getAnnotations();
+          for (const ann of annotations) {
+            if (ann.subtype !== 'Link' || !ann.url) continue;
+            const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(ann.rect);
+            const link = document.createElement('a');
+            link.href = ann.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.left   = (Math.min(x1, x2) / dpr) + 'px';
+            link.style.top    = (Math.min(y1, y2) / dpr) + 'px';
+            link.style.width  = (Math.abs(x2 - x1) / dpr) + 'px';
+            link.style.height = (Math.abs(y2 - y1) / dpr) + 'px';
+            pageDiv.appendChild(link);
+          }
+
+          container.appendChild(pageDiv);
         }
       } catch (err) {
         console.error(err);
