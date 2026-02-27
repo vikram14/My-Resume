@@ -85,7 +85,7 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
-    const PDF_URL = '%20My%20Resume.pdf';
+    const PDF_URL = '%20My%20Resume.pdf?v=' + Date.now();
 
     async function renderPDF() {
       const loading = document.getElementById('loading');
